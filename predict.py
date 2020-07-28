@@ -35,10 +35,10 @@ def get_model(args):
         model = models.squeezenet1_0(pretrained=True)
     else:
         model = models.vgg16(pretrained=True)
-        
+
     for param in model.parameters():
         param.requires_grad = False
-        
+
     return model
 
 def load_checkpoint(args):
@@ -55,11 +55,11 @@ def load_checkpoint(args):
     classifier.load_state_dict(checkpoint['classifier_state'])
     model.classifier = classifier
     model.class_to_idx = checkpoint['class_to_idx']
-    
+
     criterion = nn.NLLLoss()
     optimizer = optim.Adam(model.classifier.parameters(), lr=checkpoint['learning_rate'])
     optimizer.load_state_dict(checkpoint['optimizer_state'])
-    
+
     return model, optimizer
 
 def predict(image_path, model, topk=5):
@@ -74,8 +74,7 @@ def predict(image_path, model, topk=5):
 
 def main():
     args = parse_predict_args()
-    
-    #image_path = './flowers/test/1/image_06743.jpg'
+
     image_path = args.image_path
     model, optimizer = load_checkpoint(args)
     probabilities, categories = predict(image_path, model, args.top_k)
@@ -84,10 +83,10 @@ def main():
 
     with open(args.category_names, 'r') as f:
         cat_to_name = json.load(f)
-        
+
     idx_to_category = {v: k for k, v in model.class_to_idx.items()}
     predicted_flowers = [cat_to_name[idx_to_category[cat]] for cat in numpy_categories]
-    
+
     print("{:>20} | Probability".format('Flower Species'))
     print("-" * 34)
     for i in range(len(predicted_flowers)):

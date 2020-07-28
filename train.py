@@ -16,12 +16,11 @@ MEAN_NORM = [0.485, 0.456, 0.406]
 STD_NORM = [0.229, 0.224, 0.225]
 
 def get_test_transforms():
-    return transforms.Compose([transforms.Resize(256), 
-                            transforms.CenterCrop(224), 
-                            transforms.ToTensor(), 
+    return transforms.Compose([transforms.Resize(256),
+                            transforms.CenterCrop(224),
+                            transforms.ToTensor(),
                             transforms.Normalize(MEAN_NORM, STD_NORM)])
 
-# TODO: deduplication
 def get_train_transforms():
     return transforms.Compose([transforms.RandomRotation(30),
                                transforms.Resize(256),
@@ -41,10 +40,10 @@ def get_model(args):
         model = models.squeezenet1_0(pretrained=True)
     else:
         model = models.vgg16(pretrained=True)
-        
+
     for param in model.parameters():
         param.requires_grad = False
-    
+
     model.classifier = nn.Sequential(nn.Linear(args.input_size, args.hidden_1_size),
                                nn.ReLU(),
                                nn.Dropout(p=args.dropout_rate),
@@ -63,7 +62,7 @@ def train_model(model, optimizer, criterion, device, args):
     validloader = torch.utils.data.DataLoader(validation_data, batch_size=args.batch_size, shuffle=True)
     model.class_to_idx = train_data.class_to_idx
     model.to(device)
-    
+
     steps = 1
     running_loss = 0
     print_every = 5
@@ -118,7 +117,7 @@ def test_model(model, criterion, device, args):
             test_accuracy += torch.mean(equality.type(torch.FloatTensor)).item()
         print("Test Loss: {:.3f}..".format(test_loss/len(testloader)),
               "Test Accuracy: {:.3f}".format(test_accuracy/len(testloader)))
-    
+
 def save_checkpoint(model, optimizer, args):
     checkpoint = {
         'epochs': args.epochs,
@@ -138,17 +137,17 @@ def save_checkpoint(model, optimizer, args):
 def main():
     start_time = monotonic()
     args = parse_train_args()
-    
+
     model = get_model(args)
     optimizer = optim.Adam(model.classifier.parameters(), lr=args.learning_rate)
     criterion = nn.NLLLoss()
     # Enable GPU only if available and configured
     device = torch.device("cuda:0" if torch.cuda.is_available() and args.gpu else "cpu")
-    
+
     train_model(model, optimizer, criterion, device, args)
     test_model(model, criterion, device, args)
     save_checkpoint(model, optimizer, args)
-    
+
     end_time = monotonic()
     tot_time = end_time - start_time
     print("\n** Total Elapsed Runtime:",

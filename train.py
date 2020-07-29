@@ -34,17 +34,20 @@ def get_model(args):
         model = models.alexnet(pretrained=True)
     elif args.arch == "densenet":
         model = models.densenet121(pretrained=True)
-    elif args.arch == "resnet":
-        model = models.resnet18(pretrained=True)
-    elif args.arch == "squeezenet":
-        model = models.squeezenet1_0(pretrained=True)
+    elif args.arch == "vgg11":
+        model = models.vgg11(pretrained=True)
+    elif args.arch == "vgg19":
+        model = models.vgg19(pretrained=True)
     else:
         model = models.vgg16(pretrained=True)
 
     for param in model.parameters():
         param.requires_grad = False
 
-    model.classifier = nn.Sequential(nn.Linear(args.input_size, args.hidden_1_size),
+    # Retrieve expected number of input features from current classifier
+    in_features = model.classifier[0].in_features
+
+    model.classifier = nn.Sequential(nn.Linear(in_features, args.hidden_1_size),
                                nn.ReLU(),
                                nn.Dropout(p=args.dropout_rate),
                                nn.Linear(args.hidden_1_size, args.hidden_2_size),
@@ -59,7 +62,7 @@ def train_model(model, optimizer, criterion, device, args):
     train_data = datasets.ImageFolder(args.data_dir + '/train', transform=get_train_transforms())
     trainloader = torch.utils.data.DataLoader(train_data, batch_size=args.batch_size, shuffle=True)
     validation_data = datasets.ImageFolder(args.data_dir + '/valid', transform=get_test_transforms())
-    validloader = torch.utils.data.DataLoader(validation_data, batch_size=args.batch_size, shuffle=True)
+    validloader = torch.utils.data.DataLoader(validation_data, batch_size=args.batch_size)
     model.class_to_idx = train_data.class_to_idx
     model.to(device)
 
@@ -123,7 +126,7 @@ def save_checkpoint(model, optimizer, args):
         'epochs': args.epochs,
         'learning_rate': args.learning_rate,
         'batch_size': args.batch_size,
-        'input_size': args.input_size,
+        'input_size': model.classifier[0].in_features,
         'hidden_1_size': args.hidden_1_size,
         'hidden_2_size': args.hidden_2_size,
         'dropout': args.dropout_rate,

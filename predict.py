@@ -29,10 +29,10 @@ def get_model(args):
         model = models.alexnet(pretrained=True)
     elif args.arch == "densenet":
         model = models.densenet121(pretrained=True)
-    elif args.arch == "resnet":
-        model = models.resnet18(pretrained=True)
-    elif args.arch == "squeezenet":
-        model = models.squeezenet1_0(pretrained=True)
+    elif args.arch == "vgg11":
+        model = models.vgg11(pretrained=True)
+    elif args.arch == "vgg19":
+        model = models.vgg19(pretrained=True)
     else:
         model = models.vgg16(pretrained=True)
 
